@@ -28,6 +28,10 @@ const OzomaSchema = new mongoose.Schema({
         name:{type:String , required:true},
         imageUrl:{type:String, required:true},
         phoneNum:{type:String, required:true}
+    }],
+    dishes:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Dishe'
     }]
 });
 

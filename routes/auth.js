@@ -2,6 +2,7 @@ const _=require("lodash");
 const {ObjectID} = require("mongodb");
 const {mongoose} = require("../db/mongoose");
 const {User} = require("../models/user");
+const {authenticate} =require('../middleware/authenticate');
 
 const accountSid = 'AC686904f73e1e29fc675d0a37560b5e29';
 const authToken = 'f2c5e0fa58f4ae49c1890c807cfdfbb4';
@@ -14,6 +15,7 @@ var rand = function(low, high) {
   }; 
 
 module.exports = function(app){
+
         // USER REGISTER
         app.post('/user/register',(req, res) => {
 
@@ -47,6 +49,17 @@ module.exports = function(app){
           });
 
 
+           //GET ALL USER OZOMA'S
+            app.get('/user/ozomat',authenticate,(req,res)=>{
+                User.findById({_id:req.user.id}).populate('ozomat').then(ozomat=>{
+                    if(!ozomat) return res.status(400).send({message:'not found'})
+                    res.status(200).send(ozomat)
+                }).catch(err=>{
+                    res.status(400).send({err})
+                });
+            })
+
+
         //GET ALL USERS
         app.get('/users',(req,res)=>{
             User.find({}).then(users =>{
@@ -56,6 +69,8 @@ module.exports = function(app){
                 res.status(400).send();
             });
         });
+
+        
 
 
 

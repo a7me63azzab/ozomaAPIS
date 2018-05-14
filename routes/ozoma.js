@@ -1,10 +1,12 @@
 const {Ozoma} = require('../models/ozoma');
+const {User} = require("../models/user");
 const _=require("lodash");
 const {ObjectID} = require("mongodb");
 const {authenticate} =require('../middleware/authenticate');
 
 
 module.exports = (app)=>{
+
      //CREATE NEW OZOMA
      app.post('/ozoma/create',authenticate,(req, res)=>{
         
@@ -13,14 +15,26 @@ module.exports = (app)=>{
             time:req.body.time,
             _creator:req.user._id
         }
-        let ozoma = new Ozoma(ozomaData);
-        ozoma.save().then((ozoma)=>{
-            if(!ozoma) return res.status(404).send();
+        let newOzoma = new Ozoma(ozomaData);
+        console.log('ozoma',newOzoma)
+        newOzoma.save().then((ozoma)=>{
+            if(!ozoma) return res.status(404).send({message:"ozoma not found"});
+
+            //ADD NEW 3ZOMZ TO THE USER
+            User.findById({_id:req.user._id}).then(user=>{
+                user.ozomat.push(newOzoma);
+                user.save();
+            })
+
+
             res.status(200).send(ozoma);
         }).catch(err=>{
-            res.status(404).send();
+            res.status(404).send({message:"ozoma not saved"});
         });
     });
+
+
+    
 
 
     //GET OZOMA BY ID
@@ -102,4 +116,30 @@ module.exports = (app)=>{
               res.status(400).send({err})
           })
     })
+
+    //DELETE OZOMA
+    app.delete('/ozoma/delete/:id',authenticate,(req,res)=>{
+        var id = req.params.id;
+        if(!ObjectID.isValid(id)){
+            return res.status(404).send();
+        }
+        Ozoma.findByIdAndRemove({
+            _id:id
+        }).then((ozoma)=>{
+            if(!ozoma){
+                return res.status(404).send();
+            }
+
+            //DELETE 3ZOMZ FROM THE USER
+            User.findById({_id:req.user._id}).then(user=>{
+                user.ozomat.pull(id);
+                user.save();
+            })
+
+            res.send({ozoma});
+        }).catch((err)=>{
+          res.status(404).send();
+        });
+        
+    });
 }
