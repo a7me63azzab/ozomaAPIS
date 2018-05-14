@@ -1,5 +1,6 @@
 const {Ozoma} = require('../models/ozoma');
 const {User} = require("../models/user");
+const {Dishe} = require("../models/dishe");
 const _=require("lodash");
 const {ObjectID} = require("mongodb");
 const {authenticate} =require('../middleware/authenticate');
@@ -135,6 +136,7 @@ module.exports = (app)=>{
                 user.ozomat.pull(id);
                 user.save();
             })
+            
 
             res.send({ozoma});
         }).catch((err)=>{

@@ -44,67 +44,62 @@ module.exports = function(app){
          });
     });
     
-
-    // app.get('/todos/:id',authenticate,(req,res)=>{
-    //     var id = req.params.id;
-    //     if(!ObjectID.isValid(id)){
-    //         return res.status(404).send();
-    //     }
-    //     Todo.findOne({
-    //         _id:id,
-    //         _creator:req.user._id
-    //     }).then((todo)=>{
-    //         console.log("ahmed",todo);
-    //         if(!todo){
-    //             return res.status(404).send();
-    //         }
-    //         res.send({todo});
-    //     }).catch((err)=>{
-    //        res.status(400).send();
-    //     });
-    // });
     
-    app.delete('/dishe/delete/:id',authenticate,(req,res)=>{
+    
+    app.delete('/dishe/delete/:id',(req,res)=>{
         var id = req.params.id;
+        console.log('id',id)
+
         if(!ObjectID.isValid(id)){
             return res.status(404).send();
         }
+
         Dishe.findByIdAndRemove({
             _id:id
         }).then((dishe)=>{
             if(!dishe){
-                return res.status(404).send();
+                return res.status(404).send({message:" dishe not found"});
             }
-
-            //DELETE DISHE FROM THE OZOMA
-            Ozoma.findById({_id:req.user._id}).then(user=>{
-                user.ozomat.pull(id);
-                user.save();
+            console.log('ozoma id' , dishe._belongTo)
+           // DELETE DISHE FROM THE OZOMA
+            Ozoma.findById({_id:dishe._belongTo}).then(ozoma=>{
+                console.log('ozoma' , ozoma)
+                if(!ozoma) return res.status(400).send({message: '3zomz not found'})
+                ozoma.dishes.pull(id);
+                ozoma.save();
             })
 
-            res.send({dishe});
+            res.status(200).send({dishe});
         }).catch((err)=>{
-          res.status(404).send();
+          res.status(404).send({err});
         });
         
     });
     
     // UPDATE DONATION 
-    app.patch('/donation/update/:id',authenticate,(req,res)=>{
+    app.patch('/dishe/update/:id',authenticate,(req,res)=>{
+        
         var id = req.params.id;
-        var body = _.pick(req.body,['name','phoneNum','imageUrl','url']);
+        var body = {
+            name:req.body.name,
+            imageUrl:req.body.imageUrl,
+            requiredNum:req.body.requiredNum,
+            available:req.body.available,
+            _belongTo:req.body.ozomaId
+        }
+
         if(!ObjectID.isValid(id)){
             res.status(404).send();
         }
          
     
-        Donation.findByIdAndUpdate({
+        Dishe.findByIdAndUpdate({
             _id:id,
-        },{$set:body},{new:true}).then((donation)=>{
-         if(!donation){
+        },{$set:body},{new:true}).then((dishe)=>{
+         if(!dishe){
              res.status(404).send();
          }
-          res.send({donation});
+          res.send({dishe});
         }).catch((err)=>{
           res.status(400).send();
         });
